@@ -5,6 +5,8 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/opiproject/opi-api v0.0.0-20230220230240-4bbc7d19755f h1:JZ6rEnjFa+6jqMsKZGJg1mfrt2AlNtKSaNO8tQEISwQ=
 github.com/opiproject/opi-api v0.0.0-20230220230240-4bbc7d19755f/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
+github.com/opiproject/opi-api v0.0.0-20230310172447-05176c3f7750 h1:V/HlKKhe7JXzH9kYc81k7wXu1tZjsWMwW+nkGbhzsMo=
+github.com/opiproject/opi-api v0.0.0-20230310172447-05176c3f7750/go.mod h1:92pv4ulvvPMuxCJ9ND3aYbmBfEMLx0VCjpkiR7ZTqPY=
 github.com/opiproject/opi-spdk-bridge v0.1.1-0.20230222152908-88edfc9eb5de h1:T8YoyT7iWNzNaxsmlmSkNPJTx2VW9Ouf1ROGE88mVU8=
 github.com/opiproject/opi-spdk-bridge v0.1.1-0.20230222152908-88edfc9eb5de/go.mod h1:iXHIV+2R6ii1/TEmxrcrjk3o87R+XWrDtAhxb1xb2Wg=
 github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6 h1:TtyC78WMafNW8QFfv3TeP3yWNDG+uxNkk9vOrnDu6JA=
