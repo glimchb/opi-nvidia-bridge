@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
 // Copyright (c) 2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
-package main
+// Package models holds definitions for SPDK json RPC structs
+package models
 
 // NvdaSubsystemNvmeCreateParams represents a Nvidia subsystem create request
 type NvdaSubsystemNvmeCreateParams struct {
@@ -62,10 +63,10 @@ type NvdaControllerNvmeDeleteParams struct {
 // NvdaControllerNvmeDeleteResult represents a Nvidia Controller delete result
 type NvdaControllerNvmeDeleteResult bool
 
-// NvdaControllerNvmeListParams is empty
+// NvdaControllerListParams is empty (both Nvme and VirtIo)
 
-// NvdaControllerNvmeListResult represents a Nvidia Controller list request
-type NvdaControllerNvmeListResult struct {
+// NvdaControllerListResult represents a Nvidia Controller list request (both Nvme and VirtIo)
+type NvdaControllerListResult struct {
 	Subnqn           string `json:"subnqn"`
 	Cntlid           int    `json:"cntlid"`
 	Name             string `json:"name"`
@@ -138,13 +139,25 @@ type NvdaControllerNvmeStatsResult struct {
 	} `json:"controllers"`
 }
 
-// GetVersionResult represents a Nvidia get version result
-type GetVersionResult struct {
-	Version string `json:"version"`
-	Fields  struct {
-		Major  int    `json:"major"`
-		Minor  int    `json:"minor"`
-		Patch  int    `json:"patch"`
-		Suffix string `json:"suffix"`
-	} `json:"fields"`
+// NvdaControllerVirtioBlkCreateParams represents a Nvidia Controller create request
+type NvdaControllerVirtioBlkCreateParams struct {
+	EmulationManager string `json:"emulation_manager"`
+	BdevType         string `json:"bdev_type"`
+	PfID             int    `json:"pf_id"`
+	VfID             int    `json:"vf_id"`
+	NumQueues        int    `json:"num_queues"`
+	Bdev             string `json:"bdev"`
+	Serial           string `json:"serial"`
 }
+
+// NvdaControllerVirtioBlkCreateResult represents a Nvidia Controller create result
+type NvdaControllerVirtioBlkCreateResult string
+
+// NvdaControllerVirtioBlkDeleteParams represents a Nvidia Controller delete request
+type NvdaControllerVirtioBlkDeleteParams struct {
+	Name  string `json:"name"`
+	Force bool   `json:"force"`
+}
+
+// NvdaControllerVirtioBlkDeleteResult represents a Nvidia Controller delete result
+type NvdaControllerVirtioBlkDeleteResult bool

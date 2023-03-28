@@ -1,4 +1,4 @@
-# OPI storage gRPC to nvidia SPDK json-rpc bridge
+# OPI gRPC to Nvidia SDK bridge third party repo
 
 [![Linters](https://github.com/opiproject/opi-nvidia-bridge/actions/workflows/linters.yml/badge.svg)](https://github.com/opiproject/opi-nvidia-bridge/actions/workflows/linters.yml)
 [![tests](https://github.com/opiproject/opi-nvidia-bridge/actions/workflows/go.yml/badge.svg)](https://github.com/opiproject/opi-nvidia-bridge/actions/workflows/go.yml)
@@ -10,7 +10,7 @@
 [![Pulls](https://img.shields.io/docker/pulls/opiproject/opi-nvidia-bridge.svg?logo=docker&style=flat&label=Pulls)](https://hub.docker.com/r/opiproject/opi-nvidia-bridge)
 [![Last Release](https://img.shields.io/github/v/release/opiproject/opi-nvidia-bridge?label=Latest&style=flat-square&logo=go)](https://github.com/opiproject/opi-nvidia-bridge/releases)
 
-This is a nvidia plugin to OPI storage APIs based on SPDK.
+This is a Nvidia app (bridge) to OPI APIs for storage, inventory, ipsec and networking (future).
 
 ## I Want To Contribute
 
@@ -18,30 +18,42 @@ This project welcomes contributions and suggestions.  We are happy to have the C
 
 See [CONTRIBUTING](https://github.com/opiproject/opi/blob/main/CONTRIBUTING.md) and [GitHub Basic Process](https://github.com/opiproject/opi/blob/main/doc-github-rules.md) for more details.
 
+## Documentation
+
+* Doca <https://docs.nvidia.com/doca/sdk/emulated-devices/index.html>
+* and <https://docs.nvidia.com/networking/display/BlueFieldDPUOSLatest/BlueField+SNAP+on+DPU>
+
 ## Getting started
 
+build like this:
+
 ```bash
-go build -v -buildmode=plugin -o /opi-nvidia-bridge.so ./...
+go build -v -o /opi-nvidia-bridge ./cmd/...
 ```
 
- in main app:
+import like this:
 
 ```go
-package main
-import (
-    "plugin"
-    pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
-)
-func main() {
-    plug, err := plugin.Open("/opi-nvidia-bridge.so")
-    feNvmeSymbol, err := plug.Lookup("PluginFrontendNvme")
-    var feNvme pb.FrontendNvmeServiceServer
-    feNvme, ok := feNvmeSymbol.(pb.FrontendNvmeServiceServer)
-    s := grpc.NewServer()
-    pb.RegisterFrontendNvmeServiceServer(s, feNvme)
-    reflection.Register(s)
-}
+import "github.com/opiproject/opi-nvidia-bridge/pkg/frontend"
 ```
+
+## FW config
+
+for Nvme:
+
+```bash
+sudo mlxconfig -d /dev/mst/mt41686_pciconf0 s NVME_EMULATION_ENABLE=1
+sudo mlxconfig -d /dev/mst/mt41686_pciconf0 s NVME_EMULATION_NUM_PF=2 NVME_EMULATION_NUM_VF=2
+```
+
+for VirtioBlk:
+
+```bash
+sudo mlxconfig -d /dev/mst/mt41686_pciconf0 s VIRTIO_BLK_EMULATION_ENABLE=1
+sudo mlxconfig -d /dev/mst/mt41686_pciconf0 s VIRTIO_BLK_EMULATION_NUM_PF=2 VIRTIO_BLK_EMULATION_NUM_VF=2
+```
+
+And then power cycle your system.
 
 ## Using docker
 
@@ -58,8 +70,10 @@ on X86 management VM run
 reflection
 
 ```bash
-$ docker run --network=host --rm -it namely/grpc-cli ls --json_input --json_output 10.10.10.10:50051 -l
+$ docker run --network=host --rm -it namely/grpc-cli ls --json_input --json_output localhost:50051
 grpc.reflection.v1alpha.ServerReflection
+opi_api.inventory.v1.InventorySvc
+opi_api.security.v1.IPsec
 opi_api.storage.v1.AioControllerService
 opi_api.storage.v1.FrontendNvmeService
 opi_api.storage.v1.FrontendVirtioBlkService
@@ -72,7 +86,9 @@ opi_api.storage.v1.NullDebugService
 full test suite
 
 ```bash
+docker run --rm -it --network=host docker.io/opiproject/godpu:main get --addr="10.10.10.10:50051"
 docker run --rm -it --network=host docker.io/opiproject/godpu:main storagetest --addr="10.10.10.10:50051"
+docker run --rm -it --network=host docker.io/opiproject/godpu:main test --addr=10.10.10.10:50151 --pingaddr=8.8.8.1"
 ```
 
 or manually

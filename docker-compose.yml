@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (c) 2022 Dell Inc, or its subsidiaries.
+# Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
 # Copyright (c) 2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 ---
 version: "3.7"
@@ -13,7 +13,7 @@ services:
       - "50051:50051"
     networks:
       - opi
-    command: /opi-nvidia-bridge -port=50051
+    command: /opi-nvidia-bridge -port=50051 -spdk_addr /var/tmp/spdk.sock
     healthcheck:
       test: grpcurl -plaintext localhost:50051 list || exit 1
 

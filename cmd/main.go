@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2022 Dell Inc, or its subsidiaries.
+// Copyright (c) 2022-2023 Dell Inc, or its subsidiaries.
 // Copyright (c) 2022 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// Copyright (C) 2023 Intel Corporation
 
 // main is the main package of the application
 package main
@@ -10,54 +11,52 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"plugin"
 
+	fe "github.com/opiproject/opi-nvidia-bridge/pkg/frontend"
+	"github.com/opiproject/opi-smbios-bridge/pkg/inventory"
 	"github.com/opiproject/opi-spdk-bridge/pkg/backend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/frontend"
 	"github.com/opiproject/opi-spdk-bridge/pkg/middleend"
+	"github.com/opiproject/opi-spdk-bridge/pkg/server"
+	"github.com/opiproject/opi-strongswan-bridge/pkg/ipsec"
 
+	pc "github.com/opiproject/opi-api/common/v1/gen/go"
+	ps "github.com/opiproject/opi-api/security/v1/gen/go"
 	pb "github.com/opiproject/opi-api/storage/v1alpha1/gen/go"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-var (
-	port = flag.Int("port", 50051, "The server port")
-)
-
 func main() {
+	var port int
+	flag.IntVar(&port, "port", 50051, "The Server port")
+	var spdkAddress string
+	flag.StringVar(&spdkAddress, "spdk_addr", "/var/tmp/spdk.sock", "Points to SPDK unix socket/tcp socket to interact with")
 	flag.Parse()
-	// Load the plugin
-	plug, err := plugin.Open("/opi-nvidia-bridge.so")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// 2. Look for an exported symbol such as a function or variable
-	feNvmeSymbol, err := plug.Lookup("PluginFrontendNvme")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// 3. Attempt to cast the symbol to the Shipper
-	var feNvme pb.FrontendNvmeServiceServer
-	feNvme, ok := feNvmeSymbol.(pb.FrontendNvmeServiceServer)
-	if !ok {
-		log.Fatal("Invalid feNvme type")
-	}
-	log.Printf("plugin serevr is %v", feNvme)
-	// 4. If everything is ok from the previous assertions, then we can proceed
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
 
-	pb.RegisterFrontendNvmeServiceServer(s, feNvme)
-	pb.RegisterFrontendVirtioBlkServiceServer(s, &frontend.Server{})
-	pb.RegisterFrontendVirtioScsiServiceServer(s, &frontend.Server{})
-	pb.RegisterNVMfRemoteControllerServiceServer(s, &backend.Server{})
-	pb.RegisterNullDebugServiceServer(s, &backend.Server{})
-	pb.RegisterAioControllerServiceServer(s, &backend.Server{})
-	pb.RegisterMiddleendServiceServer(s, &middleend.Server{})
+	s := grpc.NewServer()
+	jsonRPC := server.NewSpdkJSONRPC(spdkAddress)
+	frontendOpiNvidiaServer := fe.NewServer(jsonRPC)
+	frontendOpiSpdkServer := frontend.NewServer(jsonRPC)
+	backendOpiSpdkServer := backend.NewServer(jsonRPC)
+	middleendOpiSpdkServer := middleend.NewServer(jsonRPC)
+
+	pb.RegisterFrontendNvmeServiceServer(s, frontendOpiNvidiaServer)
+	pb.RegisterFrontendVirtioBlkServiceServer(s, frontendOpiNvidiaServer)
+	pb.RegisterFrontendVirtioScsiServiceServer(s, frontendOpiSpdkServer)
+	pb.RegisterNVMfRemoteControllerServiceServer(s, backendOpiSpdkServer)
+	pb.RegisterNullDebugServiceServer(s, backendOpiSpdkServer)
+	pb.RegisterAioControllerServiceServer(s, backendOpiSpdkServer)
+	pb.RegisterMiddleendServiceServer(s, middleendOpiSpdkServer)
+	pc.RegisterInventorySvcServer(s, &inventory.Server{})
+	ps.RegisterIPsecServer(s, &ipsec.Server{})
+
 	reflection.Register(s)
 
 	log.Printf("server listening at %v", lis.Addr())
