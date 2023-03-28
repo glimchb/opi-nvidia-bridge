@@ -6,6 +6,16 @@ on:
     - cron: '0 3 1 1 *'
 
 jobs:
-  call:
-    uses: opiproject/opi-smbios-bridge/.github/workflows/update-copyright-years-in-license-file.yml@main
-    secrets: inherit
+  copyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: FantasticFiasco/action-update-license-year@fix/transform-only-applied-once-per-file
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: |
+            Dockerfile
+            docker-compose.yml
+            ./**/*.go
